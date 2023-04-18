@@ -1,0 +1,55 @@
+version: '2.4'
+x-database-variables: &database-variables
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/springboot2_essentials
+services:
+  springboot2_essentials:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    image: springboot2_essentials/api
+    ports:
+      - '8080:8080'
+      - '5005:5005'
+    environment:
+      - ADDITIONAL_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Xmx1G -Xms128m -XX:MaxMetaspaceSize=128m
+      - PROFILE=dev
+    links:
+      - db
+  db:
+    image: mysql:5.6
+    container_name: mysql
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_DATABASE=springboot2_essentials
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    mem_limit: 512m
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes: 
+    - "./src/main/resources/prometheus.yml:/etc/prometheus/prometheus.yml"
+    command: "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+    - "9090:9090"
+    mem_limit: 128m
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports: 
+        - "3000:3000"
+    mem_limit: 128m
+    
+  springboot2-essentials:
+    image: wbgm/springboot2-essentials:0.0.1-SNAPSHOT
+    ports:
+    - "8080:8080"
+    environment:
+        <<: *database-variables
+    mem_limit: 512m
+    volumes:
+      - ./docker/volume_mysql:/var/lib/mysql
+  
+            
+            
